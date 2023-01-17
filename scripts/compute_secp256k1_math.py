@@ -80,7 +80,7 @@ def get_g_pow_val(g_pows, exp):
     return curr_sum            
             
 def get_cache_str(n, k, stride):
-    num_strides = math.ceil(n * k / stride);
+    numStrides = math.ceil(n * k / stride);
     stride_cache_size = 2 ** stride
     ret_str = '''
 function get_g_pow_stride{}_table(n, k) '''.format(stride)
@@ -88,11 +88,11 @@ function get_g_pow_stride{}_table(n, k) '''.format(stride)
     ret_str = ret_str + '''
     assert(n == {} && k == {});
     var powers[{}][{}][2][{}];
-'''.format(n, k, num_strides, 2 ** stride, k)
+'''.format(n, k, numStrides, 2 ** stride, k)
     EXP = 256 + stride
     g_pows = get_g_pows(EXP)
 
-    for stride_idx in range(num_strides):
+    for stride_idx in range(numStrides):
         for idx in range(2 ** stride):
             exp = idx * (2 ** (stride_idx * stride))
             ret_append = '\n'

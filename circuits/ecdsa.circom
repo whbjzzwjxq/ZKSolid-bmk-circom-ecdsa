@@ -22,9 +22,9 @@ template ECDSAPrivToPub(n, k) {
         n2b[i].in <== privkey[i];
     }
 
-    var num_strides = div_ceil(n * k, stride);
+    var numStrides = div_ceil(n * k, stride);
     // power[i][j] contains: [j * (1 << stride * i) * G] for 1 <= j < (1 << stride)
-    var powers[num_strides][2 ** stride][2][k];
+    var powers[numStrides][2 ** stride][2][k];
     powers = get_g_pow_stride8_table(n, k);
 
     // contains a dummy point G * 2 ** 255 to stand in when we are adding 0
@@ -36,8 +36,8 @@ template ECDSAPrivToPub(n, k) {
     for (var i = 0; i < k; i++) dummy[1][i] = dummyHolder[1][i];
 
     // selector[i] contains a value in [0, ..., 2**i - 1]
-    component selectors[num_strides];
-    for (var i = 0; i < num_strides; i++) {
+    component selectors[numStrides];
+    for (var i = 0; i < numStrides; i++) {
         selectors[i] = Bits2Num(stride);
         for (var j = 0; j < stride; j++) {
             var bit_idx1 = (i * stride + j) \ n;
@@ -53,9 +53,9 @@ template ECDSAPrivToPub(n, k) {
     // multiplexers[i][l].out will be the coordinates of:
     // selectors[i].out * (2 ** (i * stride)) * G    if selectors[i].out is non-zero
     // (2 ** 255) * G                                if selectors[i].out is zero
-    component multiplexers[num_strides][2];
+    component multiplexers[numStrides][2];
     // select from k-register outputs using a 2 ** stride bit selector
-    for (var i = 0; i < num_strides; i++) {
+    for (var i = 0; i < numStrides; i++) {
         for (var l = 0; l < 2; l++) {
             multiplexers[i][l] = Multiplexer(k, (1 << stride));
             multiplexers[i][l].sel <== selectors[i].out;
@@ -68,34 +68,34 @@ template ECDSAPrivToPub(n, k) {
         }
     }
 
-    component iszero[num_strides];
-    for (var i = 0; i < num_strides; i++) {
+    component iszero[numStrides];
+    for (var i = 0; i < numStrides; i++) {
         iszero[i] = IsZero();
         iszero[i].in <== selectors[i].out;
     }
 
     // has_prev_nonzero[i] = 1 if at least one of the selections in privkey up to stride i is non-zero
-    component has_prev_nonzero[num_strides];
+    component has_prev_nonzero[numStrides];
     has_prev_nonzero[0] = OR();
     has_prev_nonzero[0].a <== 0;
     has_prev_nonzero[0].b <== 1 - iszero[0].out;
-    for (var i = 1; i < num_strides; i++) {
+    for (var i = 1; i < numStrides; i++) {
         has_prev_nonzero[i] = OR();
         has_prev_nonzero[i].a <== has_prev_nonzero[i - 1].out;
         has_prev_nonzero[i].b <== 1 - iszero[i].out;
     }
 
-    signal partial[num_strides][2][k];
+    signal partial[numStrides][2][k];
     for (var idx = 0; idx < k; idx++) {
         for (var l = 0; l < 2; l++) {
             partial[0][l][idx] <== multiplexers[0][l].out[idx];
         }
     }
 
-    component adders[num_strides - 1];
-    signal intermed1[num_strides - 1][2][k];
-    signal intermed2[num_strides - 1][2][k];
-    for (var i = 1; i < num_strides; i++) {
+    component adders[numStrides - 1];
+    signal intermed1[numStrides - 1][2][k];
+    signal intermed2[numStrides - 1][2][k];
+    for (var i = 1; i < numStrides; i++) {
         adders[i - 1] = Secp256k1AddUnequal(n, k);
         for (var idx = 0; idx < k; idx++) {
             for (var l = 0; l < 2; l++) {
@@ -117,7 +117,7 @@ template ECDSAPrivToPub(n, k) {
 
     for (var i = 0; i < k; i++) {
         for (var l = 0; l < 2; l++) {
-            pubkey[l][i] <== partial[num_strides - 1][l][i];
+            pubkey[l][i] <== partial[numStrides - 1][l][i];
         }
     }
 }
