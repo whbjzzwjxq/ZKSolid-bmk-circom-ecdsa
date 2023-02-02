@@ -4,6 +4,7 @@ include "./utils.circom";
 include "./permutations.circom";
 
 template Pad(nBits) {
+    assert(nBits <= 512);
     signal input in[nBits];
 
     var blockSize=136*8;
@@ -16,22 +17,26 @@ template Pad(nBits) {
         out2[i] <== in[i];
     }
     var domain = 0x01;
+    var domain2 = 0x80;
     for (i=0; i<8; i++) {
         out2[nBits+i] <== (domain >> i) & 1;
     }
     for (i=nBits+8; i<blockSize; i++) {
         out2[i] <== 0;
     }
-    component aux = OrArray(8);
-    for (i=0; i<8; i++) {
-        aux.a[i] <== out2[blockSize-8+i];
-        aux.b[i] <== (0x80 >> i) & 1;
+    for (i=0; i<nBits; i++) {
+        out[i] <== out2[i];
     }
     for (i=0; i<8; i++) {
-        out[blockSize-8+i] <== aux.out[i];
+        out[nBits+i] <== (domain >> i) & 1;
+        out[nBits+i] === out2[nBits+i];
     }
-    for (i=0; i<blockSize-8; i++) {
-        out[i]<==out2[i];
+    for (i=nBits+8; i<blockSize-8; i++) {
+        out[i] <== 0;
+        out[i] === out2[i];
+    }
+    for (i=0; i<8; i++) {
+        out[blockSize-8+i] <== (domain2 >> i) & 1;
     }
 }
 
